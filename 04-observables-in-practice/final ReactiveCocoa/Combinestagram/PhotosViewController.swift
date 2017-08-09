@@ -22,6 +22,9 @@
 
 import UIKit
 import Photos
+import ReactiveSwift
+import ReactiveCocoa
+import enum Result.NoError
 
 class PhotosViewController: UICollectionViewController {
 
@@ -31,7 +34,8 @@ class PhotosViewController: UICollectionViewController {
 
   private lazy var photos = PhotosViewController.loadPhotos()
   private lazy var imageManager = PHCachingImageManager()
-
+  let selectedPhoto = MutableProperty<UIImage?>(nil)
+  
   private lazy var thumbnailSize: CGSize = {
     let cellSize = (self.collectionViewLayout as! UICollectionViewFlowLayout).itemSize
     return CGSize(width: cellSize.width * UIScreen.main.scale,
@@ -47,12 +51,10 @@ class PhotosViewController: UICollectionViewController {
   // MARK: View Controller
   override func viewDidLoad() {
     super.viewDidLoad()
-
   }
 
   override func viewWillDisappear(_ animated: Bool) {
     super.viewWillDisappear(animated)
-    
   }
 
   // MARK: UICollectionView
@@ -85,8 +87,10 @@ class PhotosViewController: UICollectionViewController {
 
     imageManager.requestImage(for: asset, targetSize: view.frame.size, contentMode: .aspectFill, options: nil, resultHandler: { [weak self] image, info in
       guard let image = image, let info = info else { return }
-
-
+      if let isThumbnail = info[PHImageResultIsDegradedKey as NSString] as?
+        Bool, !isThumbnail {
+        self?.selectedPhoto.value = image
+      }
     })
   }
 }

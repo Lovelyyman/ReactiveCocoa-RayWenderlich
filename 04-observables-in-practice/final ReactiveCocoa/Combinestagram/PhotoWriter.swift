@@ -22,9 +22,33 @@
 
 import Foundation
 import UIKit
+import ReactiveSwift
 
 class PhotoWriter: NSObject {
   typealias Callback = (NSError?)->Void
-
+  
+  private var callback: Callback
+  private init(callback: @escaping Callback) {
+    self.callback = callback
+  }
+  
+  func image(_ image: UIImage, didFinishSavingWithError error: NSError?,
+             contextInfo: UnsafeRawPointer) {
+    callback(error)
+  }
+  
+  static func saveSignal(_ image: UIImage) -> Signal<Void, NSError> {
+    return Signal { observer in
+      let writer = PhotoWriter { error in
+        if let error = error {
+          observer.send(error: error)
+        } else {
+          observer.sendCompleted()
+        }
+      }
+      UIImageWriteToSavedPhotosAlbum(image, writer, #selector(PhotoWriter.image(_:didFinishSavingWithError:contextInfo:)), nil)
+      return nil
+    }
+  }
 }
 

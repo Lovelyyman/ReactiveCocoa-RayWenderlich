@@ -24,6 +24,19 @@ import UIKit
 import RxSwift
 import ReactiveSwift
 
+extension UIViewController {
+  func showAlert(_ title: String, description: String?) -> SignalProducer<Void, NSError> {
+    return SignalProducer {[weak self] observer, lifeTime in
+      let alert = UIAlertController(title: title, message: description, preferredStyle: .alert)
+      alert.addAction(UIAlertAction(title: "Close", style: .default, handler: { _ in observer.sendCompleted() }))
+      self?.present(alert, animated: true, completion: nil)
+      lifeTime.observeEnded {
+        alert.dismiss(animated: true, completion: nil)
+      }
+    }
+  }
+}
+
 class MainViewController: UIViewController {
 
   @IBOutlet weak var imagePreview: UIImageView!
@@ -85,8 +98,6 @@ class MainViewController: UIViewController {
   }
 
   func showMessage(_ title: String, description: String? = nil) {
-    let alert = UIAlertController(title: title, message: description, preferredStyle: .alert)
-    alert.addAction(UIAlertAction(title: "Close", style: .default, handler: { [weak self] _ in self?.dismiss(animated: true, completion: nil)}))
-    present(alert, animated: true, completion: nil)
+    showAlert(title, description: description).start()
   }
 }
